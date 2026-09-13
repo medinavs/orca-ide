@@ -13,12 +13,14 @@ export const ORCA_LSP_CLIENT_CAPABILITIES = {
   workspace: {
     workspaceFolders: true,
     configuration: true,
+    diagnostics: { refreshSupport: true },
     symbol: { symbolKind: { valueSet: Array.from({ length: 26 }, (_, index) => index + 1) } },
     didChangeConfiguration: { dynamicRegistration: false }
   },
   textDocument: {
     synchronization: { dynamicRegistration: false, willSave: false, didSave: true },
     publishDiagnostics: { relatedInformation: true, versionSupport: true },
+    diagnostic: { dynamicRegistration: false, relatedDocumentSupport: false },
     hover: { contentFormat: ['markdown', 'plaintext'] },
     completion: {
       completionItem: {

@@ -45,6 +45,11 @@ export type LanguageServersApi = {
   ) => Promise<LanguageFeatureResult<T>>
   diagnostics: (rootPath: string) => Promise<WorkspaceDiagnosticsSnapshot>
   statuses: () => Promise<LanguageServerStatus[]>
+  restart: (args: {
+    executionHostId: ExecutionHostId
+    rootPath: string
+    serverId: string
+  }) => Promise<void>
   stopWorkspace: (args: { executionHostId: ExecutionHostId; rootPath: string }) => Promise<void>
   /** Fires whenever any file's diagnostics change in a workspace. */
   onDiagnosticsChanged: (callback: (snapshot: WorkspaceDiagnosticsSnapshot) => void) => () => void

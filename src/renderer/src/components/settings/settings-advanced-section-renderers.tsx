@@ -3,6 +3,7 @@ import { AdvancedPane } from './AdvancedPane'
 import { ExperimentalPane } from './ExperimentalPane'
 import { PluginsSettingsSection } from './PluginsSettingsSection'
 import { VscodeExtensionsSettingsSection } from './VscodeExtensionsSettingsSection'
+import { LanguageServersSettingsPane } from './LanguageServersSettingsPane'
 import { SettingsSection } from './SettingsSection'
 import { translate } from '@/i18n/i18n'
 import type { SettingsRenderContext } from './settings-render-context'
@@ -10,6 +11,24 @@ import type { SettingsRenderContext } from './settings-render-context'
 const DevToolsPane = import.meta.env.DEV
   ? lazy(() => import('./DevToolsPane').then((module) => ({ default: module.DevToolsPane })))
   : null
+
+export function renderLanguageServersSettingsSection(
+  context: SettingsRenderContext
+): React.JSX.Element | null {
+  return context.model.showDesktopOnlySettings ? (
+    <SettingsSection
+      id="language-servers"
+      title={translate('settings.lsp.title', 'Language Servers')}
+      description={translate(
+        'settings.lsp.description',
+        'Monitor and restart language servers for your workspaces.'
+      )}
+      searchEntries={context.navigation.getSectionSearchEntries('language-servers')}
+    >
+      {context.view.isSectionMounted('language-servers') ? <LanguageServersSettingsPane /> : null}
+    </SettingsSection>
+  ) : null
+}
 
 export function renderAdvancedSettingsSection(
   context: SettingsRenderContext

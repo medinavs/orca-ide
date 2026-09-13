@@ -27,6 +27,7 @@ export const languageServersApi = {
   diagnostics: (rootPath: string): Promise<WorkspaceDiagnosticsSnapshot> =>
     ipcRenderer.invoke('lsp:diagnostics', { rootPath }),
   statuses: (): Promise<LanguageServerStatus[]> => ipcRenderer.invoke('lsp:statuses'),
+  restart: (args): Promise<void> => ipcRenderer.invoke('lsp:restart', args),
   stopWorkspace: (args): Promise<void> => ipcRenderer.invoke('lsp:stopWorkspace', args),
   onDiagnosticsChanged: (callback): (() => void) => {
     const listener = (
