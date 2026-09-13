@@ -10,8 +10,10 @@
  * of which surface asks first.
  */
 import { create } from 'zustand'
-import type { InstalledVscodeExtension } from '../../../main/vscode-compat/vscode-extension-store'
-import type { VscodeContributionBundle } from '../../../main/vscode-compat/vscode-extension-service'
+import type {
+  InstalledVscodeExtension,
+  VscodeContributionBundle
+} from '../../../shared/vscode-compat/vscode-extension-types'
 import type { ExtensionRegistrationSummary } from '@/lib/vscode-extensions/register-extension-contributions'
 
 export type VscodeExtensionsFetchStatus = 'idle' | 'loading' | 'ready' | 'error'

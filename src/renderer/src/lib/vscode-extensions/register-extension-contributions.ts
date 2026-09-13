@@ -15,7 +15,7 @@
  * registration differs; see `attachTextMateTokensProvider` for why.
  */
 import type * as Monaco from 'monaco-editor'
-import type { VscodeContributionBundle } from '../../../../main/vscode-compat/vscode-extension-service'
+import type { VscodeContributionBundle } from '../../../../shared/vscode-compat/vscode-extension-types'
 import type { IRawGrammar } from 'vscode-textmate'
 import type { MonacoLanguageConfiguration } from '../../../../shared/vscode-compat/vscode-language-configuration'
 import type { createTextMateTokensProvider } from '../monaco-languages/textmate-token-provider'
@@ -118,9 +118,7 @@ export function registerVscodeContributions(
     if (registeredLanguages.has(language.id)) {
       continue
     }
-    const alreadyKnown = monaco.languages
-      .getLanguages()
-      .some((known) => known.id === language.id)
+    const alreadyKnown = monaco.languages.getLanguages().some((known) => known.id === language.id)
     if (!alreadyKnown) {
       monaco.languages.register({
         id: language.id,

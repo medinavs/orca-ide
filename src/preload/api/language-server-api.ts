@@ -4,8 +4,8 @@
  * `src/main/lsp/lsp-uri-normalization.ts`).
  */
 import type { ExecutionHostId } from '../../shared/execution-host'
-import type { LanguageServerStatus } from '../../main/lsp/language-server-session'
-import type { LanguageServerUnavailable } from '../../main/lsp/language-server-manager'
+import type { LanguageServerStatus } from '../../shared/lsp/language-server-status'
+import type { LanguageServerUnavailable } from '../../shared/lsp/language-server-status'
 import type { WorkspaceDiagnosticsSnapshot } from '../../shared/lsp/workspace-diagnostics'
 
 export type LanguageDocumentRef = {
@@ -45,13 +45,8 @@ export type LanguageServersApi = {
   ) => Promise<LanguageFeatureResult<T>>
   diagnostics: (rootPath: string) => Promise<WorkspaceDiagnosticsSnapshot>
   statuses: () => Promise<LanguageServerStatus[]>
-  stopWorkspace: (args: {
-    executionHostId: ExecutionHostId
-    rootPath: string
-  }) => Promise<void>
+  stopWorkspace: (args: { executionHostId: ExecutionHostId; rootPath: string }) => Promise<void>
   /** Fires whenever any file's diagnostics change in a workspace. */
-  onDiagnosticsChanged: (
-    callback: (snapshot: WorkspaceDiagnosticsSnapshot) => void
-  ) => () => void
+  onDiagnosticsChanged: (callback: (snapshot: WorkspaceDiagnosticsSnapshot) => void) => () => void
   onStatusChanged: (callback: (status: LanguageServerStatus) => void) => () => void
 }

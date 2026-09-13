@@ -1,14 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { VscodeContributionBundle } from '../../../../main/vscode-compat/vscode-extension-service'
+import type { VscodeContributionBundle } from '../../../../shared/vscode-compat/vscode-extension-types'
 import {
   registerVscodeContributions,
   registeredExtensionThemeIds,
   resetVscodeContributionRegistrationForTests
 } from './register-extension-contributions'
-import {
-  extensionSnippetsFor,
-  resetExtensionSnippetsForTests
-} from './extension-snippet-provider'
+import { extensionSnippetsFor, resetExtensionSnippetsForTests } from './extension-snippet-provider'
 
 type Registered = {
   themes: { id: string; data: unknown }[]
@@ -175,9 +172,7 @@ describe('registerVscodeContributions languages', () => {
     const summary = registerVscodeContributions(
       fakeMonaco(),
       bundle({
-        languages: [
-          { extensionId: 'x', id: 'go', extensions: ['.go'], aliases: [], filenames: [] }
-        ]
+        languages: [{ extensionId: 'x', id: 'go', extensions: ['.go'], aliases: [], filenames: [] }]
       })
     )
     expect(summary.languages).toBe(0)
@@ -231,9 +226,7 @@ describe('registerVscodeContributions grammars', () => {
 
   it('registers a scope only once', () => {
     const contributions = bundle({
-      languages: [
-        { extensionId: 'x', id: 'demo', extensions: [], aliases: [], filenames: [] }
-      ],
+      languages: [{ extensionId: 'x', id: 'demo', extensions: [], aliases: [], filenames: [] }],
       grammars: [{ extensionId: 'x', scopeName: 'source.demo', languageId: 'demo' }]
     })
     registerVscodeContributions(fakeMonaco(), contributions)
@@ -267,10 +260,7 @@ describe('registerVscodeContributions snippets', () => {
         ]
       })
     )
-    expect(extensionSnippetsFor('go').map((snippet) => snippet.prefix)).toEqual([
-      'for',
-      'iferr'
-    ])
+    expect(extensionSnippetsFor('go').map((snippet) => snippet.prefix)).toEqual(['for', 'iferr'])
     // One provider for the language, not one per extension.
     expect(registered.completionProviders).toEqual(['go'])
   })
@@ -314,9 +304,7 @@ describe('registerVscodeContributions ordering', () => {
     registerVscodeContributions(
       wrapped,
       bundle({
-        languages: [
-          { extensionId: 'x', id: 'demo', extensions: [], aliases: [], filenames: [] }
-        ],
+        languages: [{ extensionId: 'x', id: 'demo', extensions: [], aliases: [], filenames: [] }],
         grammars: [{ extensionId: 'x', scopeName: 'source.demo', languageId: 'demo' }]
       })
     )
@@ -359,19 +347,13 @@ describe('grammar body loading', () => {
 
   /** Stands in for the real provider module, which needs the wasm engine. */
   const fakeProviderModule = {
-    createTextMateTokensProvider: ({
-      loadGrammar
-    }: {
-      loadGrammar: () => Promise<unknown>
-    }) => {
+    createTextMateTokensProvider: ({ loadGrammar }: { loadGrammar: () => Promise<unknown> }) => {
       void loadGrammar()
       return { getInitialState: () => ({}), tokenize: () => ({ tokens: [], endState: {} }) }
     }
   } as never
 
-  function registerGrammar(
-    monaco: Parameters<typeof registerVscodeContributions>[0]
-  ): void {
+  function registerGrammar(monaco: Parameters<typeof registerVscodeContributions>[0]): void {
     registerVscodeContributions(
       monaco,
       bundle({

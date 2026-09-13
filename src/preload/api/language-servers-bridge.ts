@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron'
-import type { LanguageServerStatus } from '../../main/lsp/language-server-session'
+import type { LanguageServerStatus } from '../../shared/lsp/language-server-status'
 import type { WorkspaceDiagnosticsSnapshot } from '../../shared/lsp/workspace-diagnostics'
 import type {
   LanguageDocumentRef,
@@ -18,7 +18,7 @@ export const languageServersApi = {
     ipcRenderer.invoke('lsp:saveDocument', ref),
   closeDocument: (ref: LanguageDocumentRef): Promise<void> =>
     ipcRenderer.invoke('lsp:closeDocument', ref),
-  request: <T,>(
+  request: <T>(
     ref: LanguageDocumentRef,
     method: string,
     params?: unknown
@@ -39,10 +39,8 @@ export const languageServersApi = {
     }
   },
   onStatusChanged: (callback): (() => void) => {
-    const listener = (
-      _event: Electron.IpcRendererEvent,
-      status: LanguageServerStatus
-    ): void => callback(status)
+    const listener = (_event: Electron.IpcRendererEvent, status: LanguageServerStatus): void =>
+      callback(status)
     ipcRenderer.on('lsp:statusChanged', listener)
     return () => {
       ipcRenderer.removeListener('lsp:statusChanged', listener)

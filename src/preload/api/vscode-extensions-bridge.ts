@@ -1,6 +1,8 @@
 import { ipcRenderer } from 'electron'
-import type { InstalledVscodeExtension } from '../../main/vscode-compat/vscode-extension-store'
-import type { VscodeContributionBundle } from '../../main/vscode-compat/vscode-extension-service'
+import type {
+  InstalledVscodeExtension,
+  VscodeContributionBundle
+} from '../../shared/vscode-compat/vscode-extension-types'
 import type { PreloadApi } from '../api-types'
 
 export type VscodeExtensionInstallOutcome =

@@ -9,7 +9,7 @@
  * Main is authoritative. This never derives a diagnostic, only presents one.
  */
 import { create } from 'zustand'
-import type { LanguageServerStatus } from '../../../main/lsp/language-server-session'
+import type { LanguageServerStatus } from '../../../shared/lsp/language-server-status'
 import {
   buildDiagnosticTreeBadges,
   snapshotDiagnosticCounts,
@@ -130,7 +130,9 @@ export function selectFileDiagnostics(
   rootPath: string | null | undefined,
   path: string
 ): WorkspaceDiagnosticsSnapshot['files'][number] | null {
-  return selectWorkspaceDiagnostics(state, rootPath).files.find((file) => file.path === path) ?? null
+  return (
+    selectWorkspaceDiagnostics(state, rootPath).files.find((file) => file.path === path) ?? null
+  )
 }
 
 export function selectWorkspaceCounts(

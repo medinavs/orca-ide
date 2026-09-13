@@ -15,32 +15,13 @@
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import {
-  readVscodeExtension,
-  type LoadedVscodeExtension
-} from './vscode-extension-reader'
+import { readVscodeExtension, type LoadedVscodeExtension } from './vscode-extension-reader'
+import type { InstalledVscodeExtension } from '../../shared/vscode-compat/vscode-extension-types'
+export type { InstalledVscodeExtension } from '../../shared/vscode-compat/vscode-extension-types'
 
 export const VSCODE_EXTENSIONS_DIRNAME = 'vscode-extensions'
 /** A guard on install size, not a product limit. */
 export const MAX_INSTALLED_VSCODE_EXTENSIONS = 200
-
-export type InstalledVscodeExtension = {
-  extensionId: string
-  displayName: string
-  version: string
-  /** Directory name under the extensions root. */
-  installDir: string
-  enabled: boolean
-  themes: { id: string; label: string; type: string }[]
-  languages: string[]
-  grammarScopes: string[]
-  snippetLanguages: string[]
-  commands: { command: string; title: string }[]
-  problems: string[]
-  /** Why parts of it are not active, in words for the extensions list. */
-  unsupported: { feature: string; explanation: string }[]
-  summary: string
-}
 
 export type VscodeExtensionStoreOptions = {
   /** Root that holds one directory per installed extension. */

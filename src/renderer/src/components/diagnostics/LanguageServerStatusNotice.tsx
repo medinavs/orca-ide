@@ -1,6 +1,6 @@
 import React from 'react'
 import { translate } from '@/i18n/i18n'
-import type { LanguageServerStatus } from '../../../../main/lsp/language-server-session'
+import type { LanguageServerStatus } from '../../../../shared/lsp/language-server-status'
 
 /**
  * The graceful-degradation surface: why a language has no diagnostics.

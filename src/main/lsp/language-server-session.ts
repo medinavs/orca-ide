@@ -30,33 +30,15 @@ import {
   type LanguageServerSpawn,
   type ServerDiagnosticsPublication
 } from './language-server-transport'
+import type { LanguageServerStatus } from '../../shared/lsp/language-server-status'
+export type {
+  LanguageServerState,
+  LanguageServerStatus
+} from '../../shared/lsp/language-server-status'
 
 const STDERR_TAIL_BYTES = 16 * 1024
 const INITIALIZE_TIMEOUT_MS = 60_000
 const SHUTDOWN_GRACE_MS = 3_000
-
-export type LanguageServerState =
-  | 'starting'
-  | 'running'
-  /** The program is not on the execution host's PATH; `installHint` applies. */
-  | 'not-installed'
-  | 'failed'
-  | 'stopped'
-
-export type LanguageServerStatus = {
-  serverId: string
-  label: string
-  rootPath: string
-  state: LanguageServerState
-  capabilities?: LspServerCapabilities
-  serverInfo?: { name: string; version?: string }
-  /** Why it is not running, already phrased for a user. */
-  message?: string
-  installHint?: string
-  documentationUrl?: string
-  stderrTail?: string
-  restarts: number
-}
 
 export type LanguageServerSessionOptions = {
   spec: LanguageServerSpec

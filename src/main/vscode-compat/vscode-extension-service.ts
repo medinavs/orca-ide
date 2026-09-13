@@ -16,38 +16,10 @@ import {
 } from './vscode-extension-store'
 import { installVsixFile, type VsixInstallResult } from './vsix-install'
 import type { LoadedVscodeExtension } from './vscode-extension-reader'
-import type { MonacoThemeData } from '../../shared/vscode-compat/vscode-theme-adapter'
-import type { MonacoLanguageConfiguration } from '../../shared/vscode-compat/vscode-language-configuration'
-import type { ParsedSnippet } from '../../shared/vscode-compat/vscode-snippets'
+import type { VscodeContributionBundle } from '../../shared/vscode-compat/vscode-extension-types'
+export type { VscodeContributionBundle } from '../../shared/vscode-compat/vscode-extension-types'
 
 /** Everything the renderer needs to register one enabled extension. */
-export type VscodeContributionBundle = {
-  themes: {
-    id: string
-    label: string
-    type: string
-    extensionId: string
-    data: MonacoThemeData
-  }[]
-  languages: {
-    extensionId: string
-    id: string
-    extensions: string[]
-    aliases: string[]
-    filenames: string[]
-    configuration?: MonacoLanguageConfiguration
-  }[]
-  grammars: {
-    extensionId: string
-    scopeName: string
-    languageId?: string
-    embeddedLanguages?: Record<string, string>
-  }[]
-  snippets: { extensionId: string; languageId: string; snippets: ParsedSnippet[] }[]
-  commands: { extensionId: string; command: string; title: string }[]
-  configurationDefaults: Record<string, unknown>
-}
-
 export type VscodeExtensionServiceOptions = {
   /** Usually `app.getPath('userData')`. */
   userDataPath: string
@@ -74,8 +46,7 @@ export function createVscodeExtensionService(
   options: VscodeExtensionServiceOptions
 ): VscodeExtensionService {
   const root = join(options.userDataPath, VSCODE_EXTENSIONS_DIRNAME)
-  const disabled = (): ReadonlySet<string> =>
-    new Set(options.disabledExtensionIds?.() ?? [])
+  const disabled = (): ReadonlySet<string> => new Set(options.disabledExtensionIds?.() ?? [])
   const store: VscodeExtensionStore = createVscodeExtensionStore({
     root,
     isEnabled: (extensionId) => !disabled().has(extensionId)
@@ -87,9 +58,7 @@ export function createVscodeExtensionService(
   }
 
   function loadedGrammarPath(extensionId: string, scopeName: string): string | null {
-    const extension = store
-      .loadEnabled()
-      .find((candidate) => candidate.extensionId === extensionId)
+    const extension = store.loadEnabled().find((candidate) => candidate.extensionId === extensionId)
     const grammar = extension?.grammars.find((entry) => entry.scopeName === scopeName)
     return grammar?.grammarPath ?? null
   }
@@ -135,10 +104,7 @@ export function createVscodeExtensionService(
   }
 }
 
-function collectInto(
-  bundle: VscodeContributionBundle,
-  extension: LoadedVscodeExtension
-): void {
+function collectInto(bundle: VscodeContributionBundle, extension: LoadedVscodeExtension): void {
   const extensionId = extension.extensionId
   for (const theme of extension.themes) {
     bundle.themes.push({ ...theme, extensionId })
