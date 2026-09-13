@@ -23,6 +23,8 @@ type VscodeExtensionsState = {
   status: VscodeExtensionsFetchStatus
   /** Counts from the last registration, for the settings pane. */
   registration: ExtensionRegistrationSummary | null
+  /** Monaco theme ids that are defined and safe to pass to `setTheme`. */
+  registeredThemeIds: string[]
   error: string | null
   refresh: () => Promise<void>
   installFromVsix: () => Promise<{ ok: boolean; error?: string; canceled?: boolean }>
@@ -30,25 +32,25 @@ type VscodeExtensionsState = {
   remove: (extensionId: string) => Promise<boolean>
 }
 
-/** Applied once; Monaco registration is additive and cannot be undone. */
-let contributionsApplied = false
-
 async function applyContributions(
   bundle: VscodeContributionBundle
-): Promise<ExtensionRegistrationSummary | null> {
+): Promise<{ summary: ExtensionRegistrationSummary; themeIds: string[] }> {
   // Imported lazily so a window that never opens the editor does not pull in
   // Monaco for the sake of the extensions list.
-  const [{ monaco }, { registerVscodeContributions }] = await Promise.all([
-    import('@/lib/monaco-setup'),
-    import('@/lib/vscode-extensions/register-extension-contributions')
-  ])
-  return registerVscodeContributions(monaco, bundle)
+  const [{ monaco }, { registerVscodeContributions, registeredExtensionThemeIds }] =
+    await Promise.all([
+      import('@/lib/monaco-setup'),
+      import('@/lib/vscode-extensions/register-extension-contributions')
+    ])
+  const summary = registerVscodeContributions(monaco, bundle)
+  return { summary, themeIds: registeredExtensionThemeIds() }
 }
 
 export const useVscodeExtensionsStore = create<VscodeExtensionsState>()((set) => ({
   extensions: [],
   status: 'idle',
   registration: null,
+  registeredThemeIds: [],
   error: null,
 
   refresh: async () => {
@@ -63,13 +65,15 @@ export const useVscodeExtensionsStore = create<VscodeExtensionsState>()((set) =>
     try {
       const extensions = await api.list()
       const bundle = await api.contributions()
-      const registration = contributionsApplied ? null : await applyContributions(bundle)
-      contributionsApplied = true
-      set((state) => ({
+      // Registration is additive, so a newly installed extension is applied on
+      // the next refresh too; already-defined themes and languages are skipped.
+      const applied = await applyContributions(bundle)
+      set({
         extensions,
         status: 'ready',
-        registration: registration ?? state.registration
-      }))
+        registration: applied.summary,
+        registeredThemeIds: applied.themeIds
+      })
     } catch (error) {
       set({ status: 'error', error: String(error) })
     }
@@ -113,6 +117,23 @@ export const useVscodeExtensionsStore = create<VscodeExtensionsState>()((set) =>
 }))
 
 let changeSubscriptionStarted = false
+let initialLoadStarted = false
+
+/**
+ * Loads and registers installed extensions once per renderer.
+ *
+ * Called from the editor, not only the settings page: otherwise a user's
+ * installed theme and grammars would never register until they happened to
+ * open Settings → Extensions.
+ */
+export function ensureVscodeExtensionsLoaded(): void {
+  if (initialLoadStarted || !window.api?.vscodeExtensions) {
+    return
+  }
+  initialLoadStarted = true
+  startVscodeExtensionsSubscription()
+  void useVscodeExtensionsStore.getState().refresh()
+}
 
 /** Keeps the list current when another window installs or removes one. */
 export function startVscodeExtensionsSubscription(): void {
@@ -126,12 +147,13 @@ export function startVscodeExtensionsSubscription(): void {
 }
 
 export function resetVscodeExtensionsStoreForTests(): void {
-  contributionsApplied = false
   changeSubscriptionStarted = false
+  initialLoadStarted = false
   useVscodeExtensionsStore.setState({
     extensions: [],
     status: 'idle',
     registration: null,
+    registeredThemeIds: [],
     error: null
   })
 }

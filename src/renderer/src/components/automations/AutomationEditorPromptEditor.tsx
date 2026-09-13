@@ -10,6 +10,7 @@ import '@/lib/monaco-setup'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
 import { buildAutomationPromptEditorOptions } from './automation-editor-prompt-options'
+import { useMonacoThemeId } from '@/lib/vscode-extensions/use-monaco-theme-id'
 
 export const AUTOMATION_PROMPT_EDITOR_SLOT = 'automation-prompt-editor'
 
@@ -75,6 +76,9 @@ export function AutomationEditorPromptEditor({
   const fontSize = computeEditorFontSize(settings?.terminalFontSize ?? 13, editorFontZoomLevel)
   const fontFamily = resolveEditorFontFamily(settings)
   const isDark = resolveDocumentTheme(settings?.theme ?? 'system')
+  // Shared with every editor: Monaco's theme is global, so a local 'vs-dark'
+  // here would reset the user's extension theme for the whole app.
+  const monacoThemeId = useMonacoThemeId(isDark)
   const options = useMemo(
     () =>
       buildAutomationPromptEditorOptions({
@@ -155,7 +159,7 @@ export function AutomationEditorPromptEditor({
           // Why: defaultValue, not controlled value — this surface owns
           // post-mount sync so React cannot wipe Monaco's undo stack.
           defaultValue={value}
-          theme={isDark ? 'vs-dark' : 'vs'}
+          theme={monacoThemeId}
           onChange={handleChange}
           onMount={handleMount}
           options={options}

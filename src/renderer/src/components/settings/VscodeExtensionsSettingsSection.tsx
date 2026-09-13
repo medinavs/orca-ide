@@ -18,11 +18,9 @@ import { SettingsSection } from './SettingsSection'
  * have to either over-prompt for a color theme or under-prompt for a plugin.
  */
 export function VscodeExtensionsSettingsSection({
-  isActive,
   settings,
   updateSettings
 }: {
-  isActive?: boolean
   settings: GlobalSettings
   updateSettings: (updates: Partial<GlobalSettings>) => Promise<void>
 }): React.JSX.Element {
@@ -33,6 +31,7 @@ export function VscodeExtensionsSettingsSection({
   const installFromVsix = useVscodeExtensionsStore((state) => state.installFromVsix)
   const installFromDirectory = useVscodeExtensionsStore((state) => state.installFromDirectory)
   const remove = useVscodeExtensionsStore((state) => state.remove)
+  const registeredThemeIds = useVscodeExtensionsStore((state) => state.registeredThemeIds)
   const [actionError, setActionError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -63,6 +62,11 @@ export function VscodeExtensionsSettingsSection({
     }
   }
 
+  const selectedThemeId = settings.vscodeColorThemeId ?? ''
+  const selectTheme = (themeId: string): void => {
+    void updateSettings({ vscodeColorThemeId: themeId })
+  }
+
   const toggle = async (extensionId: string, enabled: boolean): Promise<void> => {
     const next = enabled
       ? disabledIds.filter((id) => id !== extensionId)
@@ -74,7 +78,6 @@ export function VscodeExtensionsSettingsSection({
   return (
     <SettingsSection
       id="vscode-extensions"
-      isActive={isActive}
       title={translate('auto.components.settings.vscodeExtensions.title', 'Extensions')}
       description={translate(
         'auto.components.settings.vscodeExtensions.description',
@@ -93,10 +96,7 @@ export function VscodeExtensionsSettingsSection({
             onClick={() => void install('directory')}
           >
             <FolderOpen className="size-3.5" aria-hidden />
-            {translate(
-              'auto.components.settings.vscodeExtensions.installFolder',
-              'From folder'
-            )}
+            {translate('auto.components.settings.vscodeExtensions.installFolder', 'From folder')}
           </Button>
         </div>
       }
@@ -112,6 +112,13 @@ export function VscodeExtensionsSettingsSection({
         </p>
       )}
 
+      <VscodeThemePicker
+        extensions={extensions}
+        registeredThemeIds={registeredThemeIds}
+        selectedThemeId={selectedThemeId}
+        onSelect={selectTheme}
+      />
+
       {status === 'loading' && extensions.length === 0 ? (
         <p className="text-xs text-muted-foreground">
           {translate('auto.components.settings.vscodeExtensions.loading', 'Loading…')}
@@ -126,30 +133,21 @@ export function VscodeExtensionsSettingsSection({
       ) : (
         <ul className="flex flex-col gap-3">
           {extensions.map((extension) => (
-            <li
-              key={extension.extensionId}
-              className="rounded border border-border p-3 text-xs"
-            >
+            <li key={extension.extensionId} className="rounded border border-border p-3 text-xs">
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate font-medium text-sm">
-                      {extension.displayName}
-                    </span>
+                    <span className="truncate font-medium text-sm">{extension.displayName}</span>
                     <span className="shrink-0 text-muted-foreground">{extension.version}</span>
                   </div>
-                  <p className="mt-0.5 truncate text-muted-foreground">
-                    {extension.extensionId}
-                  </p>
+                  <p className="mt-0.5 truncate text-muted-foreground">{extension.extensionId}</p>
                   <p className="mt-1">{extension.summary}</p>
                 </div>
                 <label className="flex shrink-0 items-center gap-1.5">
                   <input
                     type="checkbox"
                     checked={extension.enabled}
-                    onChange={(event) =>
-                      void toggle(extension.extensionId, event.target.checked)
-                    }
+                    onChange={(event) => void toggle(extension.extensionId, event.target.checked)}
                   />
                   {translate('auto.components.settings.vscodeExtensions.enabled', 'Enabled')}
                 </label>
@@ -175,6 +173,58 @@ export function VscodeExtensionsSettingsSection({
         </ul>
       )}
     </SettingsSection>
+  )
+}
+
+/**
+ * Chooses the editor color theme from installed extensions.
+ *
+ * Only themes that are actually registered in Monaco are selectable, so picking
+ * one always has a visible effect; "Orca default" clears the choice and returns
+ * to the built-in light/dark theme that follows the app appearance.
+ */
+function VscodeThemePicker({
+  extensions,
+  registeredThemeIds,
+  selectedThemeId,
+  onSelect
+}: {
+  extensions: {
+    extensionId: string
+    enabled: boolean
+    themes: { id: string; label: string; type: string }[]
+  }[]
+  registeredThemeIds: string[]
+  selectedThemeId: string
+  onSelect: (themeId: string) => void
+}): React.JSX.Element | null {
+  const themes = extensions
+    .filter((extension) => extension.enabled)
+    .flatMap((extension) => extension.themes)
+    .filter((theme) => registeredThemeIds.includes(theme.id))
+  if (themes.length === 0) {
+    return null
+  }
+  return (
+    <label className="flex flex-col gap-1.5 text-xs">
+      <span className="font-medium">
+        {translate('auto.components.settings.vscodeExtensions.colorTheme', 'Editor color theme')}
+      </span>
+      <select
+        value={registeredThemeIds.includes(selectedThemeId) ? selectedThemeId : ''}
+        onChange={(event) => onSelect(event.target.value)}
+        className="h-8 max-w-sm rounded border border-border bg-input px-2 text-xs"
+      >
+        <option value="">
+          {translate('auto.components.settings.vscodeExtensions.defaultTheme', 'Orca default')}
+        </option>
+        {themes.map((theme) => (
+          <option key={theme.id} value={theme.id}>
+            {theme.label}
+          </option>
+        ))}
+      </select>
+    </label>
   )
 }
 

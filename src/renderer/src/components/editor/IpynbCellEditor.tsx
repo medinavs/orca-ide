@@ -12,6 +12,7 @@ import { installEditorSaveShortcut, installMonacoEditorFindShortcut } from './ed
 import { getIpynbCodeCellEditorHeight, getIpynbCodeCellPreviewLines } from './ipynb-code-cell-lines'
 import type { IpynbCell } from './ipynb-parse'
 import MonacoCodeExcerpt from './MonacoCodeExcerpt'
+import { useMonacoThemeId } from '@/lib/vscode-extensions/use-monaco-theme-id'
 
 export function IpynbMarkdownCell({ source }: { source: string }): React.JSX.Element {
   return (
@@ -67,6 +68,7 @@ function IpynbCodeCellEditor({
   const fontSize = computeEditorFontSize(settings?.terminalFontSize ?? 13, editorFontZoomLevel)
   const editorHeight = getIpynbCodeCellEditorHeight(source, fontSize)
   const isDark = resolveDocumentTheme(settings?.theme ?? 'system')
+  const monacoThemeId = useMonacoThemeId(isDark)
   const lines = useMemo(() => getIpynbCodeCellPreviewLines(source), [source])
   const handleMount: OnMount = useCallback((editorInstance, monacoInstance) => {
     editorInstance.focus()
@@ -91,8 +93,8 @@ function IpynbCodeCellEditor({
   }, [])
 
   useEffect(() => {
-    monaco.editor.setTheme(isDark ? 'vs-dark' : 'vs')
-  }, [isDark])
+    monaco.editor.setTheme(monacoThemeId)
+  }, [monacoThemeId])
 
   if (!active) {
     return (
@@ -124,7 +126,7 @@ function IpynbCodeCellEditor({
         height={editorHeight}
         defaultLanguage={cell.language}
         language={cell.language}
-        theme={isDark ? 'vs-dark' : 'vs'}
+        theme={monacoThemeId}
         value={source}
         onMount={handleMount}
         onChange={(value) => onChange(value ?? '')}

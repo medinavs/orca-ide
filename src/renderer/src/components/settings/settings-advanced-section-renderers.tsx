@@ -101,12 +101,12 @@ export function renderPluginsSettingsSection(
 export function renderVscodeExtensionsSettingsSection(
   context: SettingsRenderContext
 ): React.JSX.Element | null {
-  const { model, view } = context
+  const { model } = context
   // Desktop-only for the same reason plugins are: installing reads a file
-  // from this machine's disk through a native picker in main.
+  // from this machine's disk through a native picker in main. Visibility is
+  // left to the active-section context, exactly as the Plugins pane does.
   return model.showDesktopOnlySettings ? (
     <VscodeExtensionsSettingsSection
-      isActive={view.isSectionMounted('vscode-extensions')}
       settings={model.settings}
       updateSettings={model.updateSettingsOrThrow}
     />

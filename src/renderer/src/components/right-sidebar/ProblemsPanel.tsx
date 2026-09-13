@@ -2,12 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useActiveWorktree } from '@/store/selectors'
 import { translate } from '@/i18n/i18n'
-import {
-  selectServerStatuses,
-  selectWorkspaceDiagnostics,
-  startLspDiagnosticsSubscription,
-  useLspDiagnosticsStore
-} from '@/store/lsp-diagnostics'
+import { startLspDiagnosticsSubscription, useLspDiagnosticsStore } from '@/store/lsp-diagnostics'
 import {
   buildProblemsPanelModel,
   type ProblemsPanelFileGroup
@@ -31,8 +26,24 @@ export default function ProblemsPanel(): React.JSX.Element {
   const outerFrame = useRef<number | null>(null)
   const innerFrame = useRef<number | null>(null)
 
-  const snapshot = useLspDiagnosticsStore((state) => selectWorkspaceDiagnostics(state, rootPath))
-  const statuses = useLspDiagnosticsStore((state) => selectServerStatuses(state, rootPath))
+  // Why raw store references: selecting a derived object or a `.filter()` array
+  // returns a new value on every call, which zustand's useSyncExternalStore
+  // reads as a change on every render — React #185. Derive in useMemo instead.
+  const storedSnapshot = useLspDiagnosticsStore((state) =>
+    rootPath === null ? undefined : state.byRoot[rootPath]
+  )
+  const serverStatuses = useLspDiagnosticsStore((state) => state.serverStatuses)
+  const snapshot = useMemo(
+    () => storedSnapshot ?? { rootPath: rootPath ?? '', files: [] },
+    [storedSnapshot, rootPath]
+  )
+  const statuses = useMemo(
+    () =>
+      rootPath === null
+        ? []
+        : Object.values(serverStatuses).filter((status) => status.rootPath === rootPath),
+    [serverStatuses, rootPath]
+  )
   const loadWorkspace = useLspDiagnosticsStore((state) => state.loadWorkspace)
 
   useEffect(() => {
@@ -44,15 +55,9 @@ export default function ProblemsPanel(): React.JSX.Element {
 
   // Why: the reveal is scheduled across two animation frames, so an unmount
   // mid-navigation must cancel them or the callback runs against a dead panel.
-  useEffect(
-    () => () => cancelDiagnosticRevealFrames({ outer: outerFrame, inner: innerFrame }),
-    []
-  )
+  useEffect(() => () => cancelDiagnosticRevealFrames({ outer: outerFrame, inner: innerFrame }), [])
 
-  const model = useMemo(
-    () => buildProblemsPanelModel(snapshot, { query }),
-    [snapshot, query]
-  )
+  const model = useMemo(() => buildProblemsPanelModel(snapshot, { query }), [snapshot, query])
 
   const navigate = useCallback(
     (group: ProblemsPanelFileGroup, line: number, column: number) => {

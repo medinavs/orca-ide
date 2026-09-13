@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  ensureVscodeExtensionsLoaded,
   resetVscodeExtensionsStoreForTests,
   selectExtensionThemes,
   startVscodeExtensionsSubscription,
@@ -14,7 +15,8 @@ vi.mock('@/lib/vscode-extensions/register-extension-contributions', () => ({
     grammars: 1,
     snippetLanguages: 1,
     problems: []
-  }))
+  })),
+  registeredExtensionThemeIds: vi.fn(() => ['t1'])
 }))
 
 function extension(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -69,24 +71,22 @@ afterEach(() => {
 })
 
 describe('useVscodeExtensionsStore refresh', () => {
-  it('loads the installed list and registers contributions once', async () => {
+  it('loads the installed list and registers its contributions', async () => {
     await useVscodeExtensionsStore.getState().refresh()
     expect(useVscodeExtensionsStore.getState().extensions).toHaveLength(1)
     expect(useVscodeExtensionsStore.getState().status).toBe('ready')
     expect(useVscodeExtensionsStore.getState().registration).toMatchObject({ themes: 2 })
-
-    await useVscodeExtensionsStore.getState().refresh()
-    // Monaco registration is additive and cannot be undone, so it runs once.
-    const { registerVscodeContributions } = await import(
-      '@/lib/vscode-extensions/register-extension-contributions'
-    )
-    expect(registerVscodeContributions).toHaveBeenCalledTimes(1)
+    expect(useVscodeExtensionsStore.getState().registeredThemeIds).toEqual(['t1'])
   })
 
-  it('keeps the previous registration summary on a later refresh', async () => {
+  it('re-applies contributions on refresh so a new install registers without a restart', async () => {
+    const { registerVscodeContributions } =
+      await import('@/lib/vscode-extensions/register-extension-contributions')
+    vi.mocked(registerVscodeContributions).mockClear()
     await useVscodeExtensionsStore.getState().refresh()
     await useVscodeExtensionsStore.getState().refresh()
-    expect(useVscodeExtensionsStore.getState().registration).toMatchObject({ themes: 2 })
+    // Registration itself is idempotent, so running it again is safe.
+    expect(registerVscodeContributions).toHaveBeenCalledTimes(2)
   })
 
   it('reports an error without clearing the status machine', async () => {
@@ -140,6 +140,21 @@ describe('useVscodeExtensionsStore mutations', () => {
     const result = await useVscodeExtensionsStore.getState().installFromVsix()
     expect(result).toMatchObject({ ok: false })
     expect(await useVscodeExtensionsStore.getState().remove('x')).toBe(false)
+  })
+})
+
+describe('ensureVscodeExtensionsLoaded', () => {
+  it('loads once no matter how many editors ask', async () => {
+    ensureVscodeExtensionsLoaded()
+    ensureVscodeExtensionsLoaded()
+    await vi.waitFor(() => expect(api.list).toHaveBeenCalledTimes(1))
+    expect(api.onChanged).toHaveBeenCalledTimes(1)
+  })
+
+  it('does nothing without the bridge', () => {
+    ;(globalThis as { window?: unknown }).window = { api: {} }
+    resetVscodeExtensionsStoreForTests()
+    expect(() => ensureVscodeExtensionsLoaded()).not.toThrow()
   })
 })
 

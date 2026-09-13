@@ -1,12 +1,10 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
-import {
-  selectWorkspaceCounts,
-  startLspDiagnosticsSubscription,
-  useLspDiagnosticsStore
-} from '@/store/lsp-diagnostics'
+import { startLspDiagnosticsSubscription, useLspDiagnosticsStore } from '@/store/lsp-diagnostics'
+import { emptyDiagnosticCounts } from '../../../../shared/lsp/diagnostic-severity'
+import { snapshotDiagnosticCounts } from '../../../../shared/lsp/workspace-diagnostics'
 import { DIAGNOSTIC_SEVERITY_PRESENTATION } from './diagnostic-severity-presentation'
 
 /**
@@ -21,7 +19,17 @@ export function DiagnosticsSummaryChip({
   className?: string
 }): React.JSX.Element | null {
   const rootPath = useActiveWorktree()?.path ?? null
-  const counts = useLspDiagnosticsStore((state) => selectWorkspaceCounts(state, rootPath))
+  // Why select the snapshot, not the counts: a selector returning a fresh
+  // object on every call makes zustand's useSyncExternalStore report a change
+  // on every render — React #185. The snapshot reference is stable until main
+  // publishes, so counts are derived from it instead.
+  const snapshot = useLspDiagnosticsStore((state) =>
+    rootPath === null ? undefined : state.byRoot[rootPath]
+  )
+  const counts = useMemo(
+    () => (snapshot === undefined ? emptyDiagnosticCounts() : snapshotDiagnosticCounts(snapshot)),
+    [snapshot]
+  )
   const setRightSidebarTab = useAppStore((s) => s.setRightSidebarTab)
   const setRightSidebarOpen = useAppStore((s) => s.setRightSidebarOpen)
 
