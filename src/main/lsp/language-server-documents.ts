@@ -29,6 +29,7 @@ export type LanguageServerDocumentsOptions = {
   connection: () => LspConnection | null
   /** The server's declared sync kind; `1` until the handshake says otherwise. */
   syncKind: () => 0 | 1 | 2
+  onChange?: () => void
 }
 
 export function createLanguageServerDocuments(
@@ -39,6 +40,13 @@ export function createLanguageServerDocuments(
 
   return {
     open(path, languageId, text) {
+      // Monaco uses base IDs for JSX; language servers need the React variants.
+      if (languageId === 'typescript' && /\.tsx$/i.test(path)) {
+        languageId = 'typescriptreact'
+      }
+      if (languageId === 'javascript' && /\.jsx$/i.test(path)) {
+        languageId = 'javascriptreact'
+      }
       // Reopening keeps counting up: a server rejects a version that went
       // backwards, and a re-open after a restart is the common case.
       const version = (documents.get(path)?.version ?? 0) + 1
@@ -46,6 +54,7 @@ export function createLanguageServerDocuments(
       options.connection()?.notify('textDocument/didOpen', {
         textDocument: { uri: uriFor(path), languageId, version, text }
       })
+      options.onChange?.()
     },
 
     change(path, text) {
@@ -56,6 +65,7 @@ export function createLanguageServerDocuments(
       const version = existing.version + 1
       const changes = buildContentChanges(options.syncKind(), existing.text, text)
       documents.set(path, { ...existing, version, text })
+      options.onChange?.()
       if (changes.length === 0) {
         return
       }
@@ -72,6 +82,7 @@ export function createLanguageServerDocuments(
       options.connection()?.notify('textDocument/didClose', {
         textDocument: { uri: uriFor(path) }
       })
+      options.onChange?.()
     },
 
     save(path) {
@@ -83,6 +94,7 @@ export function createLanguageServerDocuments(
         textDocument: { uri: uriFor(path) },
         text: existing.text
       })
+      options.onChange?.()
     },
 
     isOpen: (path) => documents.has(path),

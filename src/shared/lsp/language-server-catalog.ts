@@ -38,11 +38,12 @@ export const LANGUAGE_SERVER_CATALOG: readonly LanguageServerSpec[] = [
   },
   {
     id: 'typescript',
-    label: 'typescript-language-server',
+    label: 'TypeScript / JavaScript',
     languageIds: ['typescript', 'javascript'],
     command: 'typescript-language-server',
     args: ['--stdio'],
-    installHint: 'Install with: npm i -g typescript-language-server typescript',
+    installHint:
+      'Install TypeScript 7+: npm i -g typescript. For TypeScript 6 and earlier: npm i -g typescript-language-server typescript@6',
     documentationUrl: 'https://github.com/typescript-language-server/typescript-language-server'
   },
   {

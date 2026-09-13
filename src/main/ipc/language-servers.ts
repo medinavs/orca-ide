@@ -20,9 +20,7 @@ const executionHostIdSchema = z
   .max(512)
   .refine(
     (value): value is ExecutionHostId =>
-      value === LOCAL_EXECUTION_HOST_ID ||
-      value.startsWith('ssh:') ||
-      value.startsWith('runtime:'),
+      value === LOCAL_EXECUTION_HOST_ID || value.startsWith('ssh:') || value.startsWith('runtime:'),
     'not an execution host id'
   )
 
@@ -94,6 +92,12 @@ export function registerLanguageServerHandlers(service: LanguageServerService): 
   )
 
   ipcMain.handle('lsp:statuses', async () => service.statuses())
+
+  ipcMain.handle('lsp:restart', async (_event, args: unknown) => {
+    await service.restart(
+      workspaceSchema.extend({ serverId: z.string().min(1).max(128) }).parse(args)
+    )
+  })
 
   ipcMain.handle('lsp:stopWorkspace', async (_event, args: unknown) => {
     await service.stopWorkspace(workspaceSchema.parse(args))

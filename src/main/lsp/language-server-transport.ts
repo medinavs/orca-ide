@@ -14,6 +14,8 @@ import type { LspConnection } from '../../shared/lsp/lsp-connection'
 import type { LanguageServerSpec } from '../../shared/lsp/language-server-catalog'
 import type { LspPublishDiagnosticsParams } from '../../shared/lsp/lsp-protocol-types'
 import { findExecutableOnPath } from './language-server-executable'
+import { findNativeTypeScriptServer } from './typescript-native-server'
+import { normalizeRuntimePathForComparison } from '../../shared/cross-platform-path'
 
 export type LanguageServerSpawn =
   | { ok: true; child: ChildProcessWithoutNullStreams; program: string }
@@ -24,7 +26,15 @@ export function spawnLanguageServer(
   rootPath: string,
   env: NodeJS.ProcessEnv = process.env
 ): LanguageServerSpawn {
-  const program = findExecutableOnPath(spec.command, { env })
+  const nativeTypeScript =
+    spec.id === 'typescript' &&
+    spec.command === 'typescript-language-server' &&
+    spec.args.length === 1 &&
+    spec.args[0] === '--stdio' &&
+    !spec.initializationOptions?.tsserver
+      ? findNativeTypeScriptServer(rootPath, env)
+      : null
+  const program = nativeTypeScript ?? findExecutableOnPath(spec.command, { env })
   if (program === null) {
     return {
       ok: false,
@@ -35,7 +45,7 @@ export function spawnLanguageServer(
   try {
     const child = spawnProcess({
       program,
-      args: [...spec.args],
+      args: nativeTypeScript ? ['--lsp', '--stdio'] : [...spec.args],
       cwd: rootPath,
       env,
       // A language server lives as long as the workspace is open.
@@ -60,6 +70,7 @@ export type ServerDiagnosticsPublication = {
 }
 
 export type ServerRequestHandlerContext = {
+  documentPaths?: () => string[]
   label: string
   onLog?: (line: string) => void
   onDiagnostics?: (publication: ServerDiagnosticsPublication) => void
@@ -109,7 +120,15 @@ export function installServerRequestHandlers(
       return
     }
     context.onDiagnostics?.({
-      path,
+      // Servers may lowercase Windows drive letters; keep the editor's spelling.
+      path:
+        context
+          .documentPaths?.()
+          .find(
+            (openPath) =>
+              normalizeRuntimePathForComparison(openPath) ===
+              normalizeRuntimePathForComparison(path)
+          ) ?? path,
       version: published.version,
       diagnostics: Array.isArray(published.diagnostics) ? published.diagnostics : []
     })

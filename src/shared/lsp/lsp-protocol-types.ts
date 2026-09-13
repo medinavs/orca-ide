@@ -29,7 +29,10 @@ export type LspPublishDiagnosticsParams = {
 }
 
 export type LspMarkupContent = { kind: 'plaintext' | 'markdown'; value: string }
-export type LspHover = { contents: LspMarkupContent | string | (string | LspMarkupContent)[]; range?: LspRange }
+export type LspHover = {
+  contents: LspMarkupContent | string | (string | LspMarkupContent)[]
+  range?: LspRange
+}
 
 export type LspTextEdit = { range: LspRange; newText: string }
 
@@ -79,11 +82,19 @@ export type LspCodeAction = {
 
 export type LspWorkspaceEdit = {
   changes?: Record<string, LspTextEdit[]>
-  documentChanges?: { textDocument: { uri: string; version?: number | null }; edits: LspTextEdit[] }[]
+  documentChanges?: {
+    textDocument: { uri: string; version?: number | null }
+    edits: LspTextEdit[]
+  }[]
 }
 
 /** Only the fields Orca gates behaviour on; servers send far more. */
 export type LspServerCapabilities = {
+  diagnosticProvider?: {
+    identifier?: string
+    interFileDependencies?: boolean
+    workspaceDiagnostics?: boolean
+  }
   textDocumentSync?: number | { change?: number; openClose?: boolean }
   hoverProvider?: boolean | object
   completionProvider?: { triggerCharacters?: string[]; resolveProvider?: boolean }

@@ -5,7 +5,7 @@ import { getShortcutsPaneSearchEntries } from '@/components/settings/shortcuts-s
 import { getStatsPaneSearchEntries } from '@/components/stats/stats-search'
 import { translate } from '@/i18n/i18n'
 import type { SettingsNavSection } from '@/lib/settings-navigation-types'
-import { BarChart3, Bell, Keyboard, Palette, TextCursorInput } from 'lucide-react'
+import { BarChart3, Bell, Keyboard, Palette, TextCursorInput, Code } from 'lucide-react'
 import type { SettingsNavigationBuildOptions } from './settings-navigation-build-options'
 
 export function buildInterfaceSettingsSections({
@@ -45,6 +45,32 @@ export function buildInterfaceSettingsSections({
     },
     ...(showDesktopOnlySettings
       ? [
+          {
+            id: 'language-servers',
+            title: translate('settings.lsp.title', 'Language Servers'),
+            description: translate(
+              'settings.lsp.description',
+              'Monitor and restart language servers for your workspaces.'
+            ),
+            icon: Code,
+            searchEntries: [
+              {
+                title: translate('settings.lsp.title', 'Language Servers'),
+                keywords: [
+                  'lsp',
+                  'restart',
+                  'typescript',
+                  'javascript',
+                  'go',
+                  'gopls',
+                  'python',
+                  'rust',
+                  'diagnostics'
+                ]
+              }
+            ],
+            group: 'interface'
+          },
           {
             id: 'notifications',
             title: translate(

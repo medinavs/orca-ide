@@ -7,6 +7,14 @@ import {
   useVscodeExtensionsStore
 } from '@/store/vscode-extensions'
 import { Button } from '../ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../ui/select'
 import { SettingsSection } from './SettingsSection'
 
 /**
@@ -210,20 +218,35 @@ function VscodeThemePicker({
       <span className="font-medium">
         {translate('auto.components.settings.vscodeExtensions.colorTheme', 'Editor color theme')}
       </span>
-      <select
-        value={registeredThemeIds.includes(selectedThemeId) ? selectedThemeId : ''}
-        onChange={(event) => onSelect(event.target.value)}
-        className="h-8 max-w-sm rounded border border-border bg-input px-2 text-xs"
+      <Select
+        value={
+          themes.some((theme) => theme.id === selectedThemeId) ? selectedThemeId : 'orca-default'
+        }
+        onValueChange={(value) => onSelect(value === 'orca-default' ? '' : value)}
       >
-        <option value="">
-          {translate('auto.components.settings.vscodeExtensions.defaultTheme', 'Orca default')}
-        </option>
-        {themes.map((theme) => (
-          <option key={theme.id} value={theme.id}>
-            {theme.label}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger
+          size="sm"
+          className="w-full max-w-sm"
+          aria-label={translate(
+            'auto.components.settings.vscodeExtensions.colorTheme',
+            'Editor color theme'
+          )}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent position="popper">
+          <SelectGroup>
+            <SelectItem value="orca-default">
+              {translate('auto.components.settings.vscodeExtensions.defaultTheme', 'Orca default')}
+            </SelectItem>
+            {themes.map((theme) => (
+              <SelectItem key={theme.id} value={theme.id}>
+                {theme.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
     </label>
   )
 }

@@ -75,8 +75,7 @@ function createFakeSessionFactory(): {
         documents.delete(path)
       },
       isDocumentOpen: (path) => documents.has(path),
-      openDocuments: () =>
-        [...documents.entries()].map(([path, record]) => ({ path, ...record })),
+      openDocuments: () => [...documents.entries()].map(([path, record]) => ({ path, ...record })),
       request: () => Promise.resolve(undefined as never),
       stop: (reason) => {
         stopped.push(reason)
@@ -90,9 +89,7 @@ function createFakeSessionFactory(): {
   return { factory, created }
 }
 
-function setup(
-  overrides: Parameters<typeof createLanguageServerManager>[0] = {}
-): {
+function setup(overrides: Parameters<typeof createLanguageServerManager>[0] = {}): {
   manager: LanguageServerManager
   created: FakeSession[]
   logs: string[]
@@ -120,10 +117,7 @@ const GO_DOC = {
 describe('createLanguageServerManager host boundary', () => {
   it('refuses an SSH workspace instead of starting a server locally', () => {
     const { manager, created } = setup()
-    const result = manager.openDocument(
-      { ...GO_DOC, executionHostId: 'ssh:box' },
-      'package main'
-    )
+    const result = manager.openDocument({ ...GO_DOC, executionHostId: 'ssh:box' }, 'package main')
     expect(result.ok).toBe(false)
     expect(result.ok === false && result.unavailable.state).toBe('unsupported-host')
     // The rule that matters: no silent local substitution for a remote repo.
@@ -279,6 +273,50 @@ describe('createLanguageServerManager crash recovery', () => {
 })
 
 describe('createLanguageServerManager teardown', () => {
+  it('restarts only the selected server and keeps edits and closes during shutdown', async () => {
+    const { manager, created } = setup()
+    manager.openDocument(GO_DOC, 'before')
+    const other = { ...GO_DOC, path: '/repo/other.go' }
+    manager.openDocument(other, 'close me')
+    manager.openDocument({ ...GO_DOC, path: '/repo/a.ts', languageId: 'typescript' }, '')
+    let finish!: () => void
+    created[0]!.stop = () =>
+      new Promise<void>((resolve) => {
+        finish = resolve
+      })
+    const target = { ...GO_DOC, serverId: 'gopls' }
+    const restart = manager.restart(target)
+    expect(manager.restart(target)).toBe(restart)
+    manager.changeDocument(GO_DOC, 'latest unsaved text')
+    manager.closeDocument(other)
+    finish()
+    await restart
+    expect(created).toHaveLength(3)
+    expect(created[1]!.stopped).toEqual([])
+    expect(created[2]!.openDocuments()).toEqual([
+      { path: GO_DOC.path, languageId: 'go', text: 'latest unsaved text' }
+    ])
+    expect(created[2]!.status().restarts).toBe(0)
+  })
+
+  it('does not revive a workspace closed during a manual restart', async () => {
+    const { manager, created } = setup()
+    manager.openDocument(GO_DOC, '')
+    const restart = manager.restart({ ...GO_DOC, serverId: 'gopls' })
+    await manager.stopWorkspace(GO_DOC, 'closed')
+    await restart
+    expect(created).toHaveLength(1)
+  })
+
+  it('refuses remote restarts without touching a local server at the same path', async () => {
+    const { manager, created } = setup()
+    manager.openDocument(GO_DOC, '')
+    await expect(
+      manager.restart({ ...GO_DOC, executionHostId: 'ssh:box', serverId: 'gopls' })
+    ).rejects.toThrow('remote host')
+    expect(created[0]!.stopped).toEqual([])
+  })
+
   it('stops only the named workspace', async () => {
     const { manager, created } = setup()
     manager.openDocument(GO_DOC, '')

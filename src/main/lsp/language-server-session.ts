@@ -31,6 +31,7 @@ import {
   type ServerDiagnosticsPublication
 } from './language-server-transport'
 import type { LanguageServerStatus } from '../../shared/lsp/language-server-status'
+import { createPullDiagnostics } from './language-server-pull-diagnostics'
 export type {
   LanguageServerState,
   LanguageServerStatus
@@ -103,7 +104,14 @@ export function createLanguageServerSession(
   readyPromise.catch(() => {})
   const documents: LanguageServerDocuments = createLanguageServerDocuments({
     connection: () => liveConnection(),
-    syncKind: () => syncKind
+    syncKind: () => syncKind,
+    onChange: () => pullDiagnostics.refresh()
+  })
+  const pullDiagnostics = createPullDiagnostics({
+    connection: () => (status.capabilities?.diagnosticProvider ? liveConnection() : null),
+    documents,
+    publish: options.onDiagnostics,
+    onLog: options.onLog
   })
 
   function publishStatus(next: Partial<LanguageServerStatus>): void {
@@ -155,7 +163,12 @@ export function createLanguageServerSession(
       }
     })
     connection = active
+    active.onRequest('workspace/diagnostic/refresh', () => {
+      pullDiagnostics.refresh()
+      return null
+    })
     installServerRequestHandlers(active, {
+      documentPaths: documents.paths,
       label: spec.label,
       onLog: options.onLog,
       onDiagnostics: options.onDiagnostics
@@ -180,7 +193,6 @@ export function createLanguageServerSession(
         child = null
       }
       if (stopping) {
-        publishStatus({ state: 'stopped', message: 'stopped' })
         return
       }
       fail(
@@ -228,6 +240,7 @@ export function createLanguageServerSession(
           }
         })
       }
+      pullDiagnostics.refresh()
     } catch (error) {
       // A closed connection means the exit handler already set the status.
       if (error instanceof LspConnectionClosedError) {
@@ -239,7 +252,7 @@ export function createLanguageServerSession(
   }
 
   const liveConnection = (): LspConnection | null =>
-    status.state === 'running' ? connection : null
+    !stopping && status.state === 'running' ? connection : null
 
   // Why memoized rather than a boolean: a second caller must await the same
   // termination, not return early while the process is still alive. App
@@ -251,6 +264,7 @@ export function createLanguageServerSession(
 
   async function runStop(reason: string): Promise<void> {
     stopping = true
+    pullDiagnostics.cancel()
     const active = connection
     const process_ = child
     if (active && status.state === 'running') {
@@ -267,11 +281,13 @@ export function createLanguageServerSession(
     }
     active?.close(reason)
     connection = null
-    documents.clear()
+    // Keep buffers until replacement so edits and closes during shutdown survive restart.
     if (process_ && process_.exitCode === null) {
       await terminate(process_)
     }
-    publishStatus({ state: 'stopped', message: reason })
+    if (status.state !== 'failed' && status.state !== 'not-installed') {
+      publishStatus({ state: 'stopped', message: reason })
+    }
     settleReady(null, new Error(`stopped: ${reason}`))
   }
 

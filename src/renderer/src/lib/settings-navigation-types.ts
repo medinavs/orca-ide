@@ -37,6 +37,7 @@ const SETTINGS_NAV_TARGETS = [
   'experimental',
   'plugins',
   'vscode-extensions',
+  'language-servers',
   'agents',
   'orchestration',
   'artifacts',

@@ -63,6 +63,11 @@ export type LanguageServerService = {
   ): Promise<LanguageFeatureResult<T>>
   diagnosticsSnapshot(rootPath: string): WorkspaceDiagnosticsSnapshot
   statuses(): LanguageServerStatus[]
+  restart(ref: {
+    executionHostId: ExecutionHostId
+    rootPath: string
+    serverId: string
+  }): Promise<void>
   onStatusChanged(listener: (status: LanguageServerStatus) => void): () => void
   stopWorkspace(ref: { executionHostId: ExecutionHostId; rootPath: string }): Promise<void>
   dispose(reason: string): Promise<void>
@@ -137,6 +142,7 @@ export function createLanguageServerService(
 
     diagnosticsSnapshot: (rootPath) => diagnostics.snapshot(rootPath),
     statuses: () => manager.statuses(),
+    restart: (ref) => manager.restart(ref),
 
     onStatusChanged(listener) {
       statusListeners.add(listener)
