@@ -18,6 +18,7 @@ import { ExternalFileChangeBanner } from './ExternalFileChangeBanner'
 import type { useMarkdownDocuments } from './useMarkdownDocuments'
 import { EditorMarkdownFileSurface } from './EditorMarkdownFileSurface'
 import type { MarkdownRenderState } from './markdown-render-mode'
+import type { LanguageDocumentRef } from '../../../../preload/api/language-server-api'
 
 const noopEditorContentChange = (_content: string): void => {}
 const noopEditorSave = async (_content: string): Promise<boolean> => false
@@ -54,7 +55,8 @@ export function EditorEditFileSurface({
   handleContentChange,
   handleDirtyStateHint,
   handleSave,
-  reloadContent
+  reloadContent,
+  languageServerDocument
 }: {
   activeFile: OpenFile
   viewStateScopeId: string
@@ -86,6 +88,8 @@ export function EditorEditFileSurface({
   handleDirtyStateHint: (dirty: boolean) => void
   handleSave: (content: string) => Promise<boolean>
   reloadContent: (file: OpenFile) => void
+  /** Resolved by EditorContent, which already knows the workspace list. */
+  languageServerDocument: LanguageDocumentRef | null
 }): React.JSX.Element {
   if (activeFile.conflict?.kind === 'conflict-placeholder') {
     return <ConflictPlaceholderView file={activeFile} />
@@ -203,6 +207,9 @@ export function EditorEditFileSurface({
           : undefined
       }
       markdownDocuments={isMarkdown ? markdownDocuments.markdownDocuments : undefined}
+      // The one surface whose buffer is a whole, real file on the host's disk,
+      // so it is the only one a language server is told about.
+      languageServerDocument={activeFile.readOnly === true ? null : languageServerDocument}
     />
   )
 

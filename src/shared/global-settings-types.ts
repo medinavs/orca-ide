@@ -8,6 +8,7 @@ import type { AppIconId } from './app-icon'
 import type { SourceControlAiSettings } from './source-control-ai-types'
 import type { ClaudeAgentTeamsMode } from './claude-agent-teams-tmux-compat'
 import type { TerminalCustomTheme } from './terminal-custom-themes'
+import type { LanguageServerOverride } from './lsp/language-server-catalog'
 import type { UiLanguage } from './ui-language'
 import type { GlobalWindowsRuntimeDefault } from './project-execution-runtime'
 import type { PersistedNativeChatSessionOptions } from './native-chat-session-options'
@@ -91,6 +92,27 @@ export type GlobalSettings = {
   editorFontFamily?: string
   /** Defaults on for profiles saved before file-editor wrapping became configurable. */
   editorWordWrap?: boolean
+  /** Master switch for LSP; off leaves the editor exactly as it was before. */
+  languageServersEnabled?: boolean
+  /**
+   * Per-server overrides, keyed by catalog id (`gopls`, `typescript`,
+   * `pyright`, …). An unknown key adds a server, which needs both `command`
+   * and `languageIds`:
+   *
+   * ```json
+   * { "gopls": { "command": ["gopls", "-rpc.trace"] },
+   *   "zls":   { "command": ["zls"], "languageIds": ["zig"] } }
+   * ```
+   */
+  languageServers?: Record<string, LanguageServerOverride>
+  /**
+   * Installed VS Code-compatible extensions the user turned off. Stored as the
+   * disabled set rather than the enabled one so a newly installed extension is
+   * active without having to write settings at install time.
+   */
+  disabledVscodeExtensionIds?: string[]
+  /** Monaco theme id from an installed extension, or undefined for built-in. */
+  vscodeColorThemeId?: string
   /** Persisted opt-out for browser spellcheck noise in rich Markdown editing surfaces. */
   richMarkdownSpellcheckEnabled?: boolean
   /** Whether local markdown review note controls and the review panel are shown. */

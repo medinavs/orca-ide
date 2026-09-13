@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Plug, Files, GitBranch, ListChecks, Workflow } from 'lucide-react'
+import { CircleAlert, Plug, Files, GitBranch, ListChecks, Workflow } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { useRepoById } from '@/store/selectors'
 import { isFolderRepo } from '../../../../shared/repo-kind'
@@ -103,6 +103,12 @@ export function useRightSidebarActivityItems({
         title: translate('auto.components.right.sidebar.index.83a10e3c44', 'Checks'),
         shortcut: checksShortcut === 'Unassigned' ? '' : checksShortcut,
         gitOnly: true
+      },
+      {
+        id: 'problems',
+        icon: CircleAlert,
+        title: translate('auto.components.right.sidebar.index.problems', 'Problems'),
+        shortcut: ''
       },
       {
         id: 'ports',

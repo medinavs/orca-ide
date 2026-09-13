@@ -16,6 +16,7 @@ import {
   Cable,
   FlaskConical,
   Lock,
+  Puzzle,
   Server,
   ShieldCheck,
   SlidersHorizontal,
@@ -148,6 +149,32 @@ export function buildRemoteSettingsSections(
             ),
             icon: Blocks,
             searchEntries: getPluginsPaneSearchEntries(),
+            group: 'experimental'
+          },
+          {
+            id: 'vscode-extensions',
+            title: translate(
+              'auto.hooks.useSettingsNavigationMetadata.vscodeExtensionsTitle',
+              'Extensions'
+            ),
+            description: translate(
+              'auto.hooks.useSettingsNavigationMetadata.vscodeExtensionsDescription',
+              'Install VS Code extensions for themes, syntax highlighting and snippets.'
+            ),
+            icon: Puzzle,
+            searchEntries: [
+              {
+                title: translate(
+                  'auto.hooks.useSettingsNavigationMetadata.vscodeExtensionsTitle',
+                  'Extensions'
+                ),
+                description: translate(
+                  'auto.hooks.useSettingsNavigationMetadata.vscodeExtensionsDescription',
+                  'Install VS Code extensions for themes, syntax highlighting and snippets.'
+                ),
+                keywords: ['vsix', 'vscode', 'theme', 'color theme', 'grammar', 'snippets']
+              }
+            ],
             group: 'experimental'
           }
         ]

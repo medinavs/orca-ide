@@ -4,6 +4,7 @@ import { computeEditorFontSize, resolveEditorFontFamily } from '@/lib/editor-fon
 import { resolveDocumentTheme } from '@/lib/document-theme'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
+import { useMonacoThemeId } from '@/lib/vscode-extensions/use-monaco-theme-id'
 
 let pythonLanguageRegistrationPromise: Promise<void> | null = null
 
@@ -53,12 +54,13 @@ export default function MonacoCodeExcerpt({
   )
   const fontFamily = resolveEditorFontFamily(settings)
   const isDark = resolveDocumentTheme(settings?.theme ?? 'system')
+  const monacoThemeId = useMonacoThemeId(isDark)
   const code = useMemo(() => lines.join('\n'), [lines])
   const [htmlLines, setHtmlLines] = useState<string[]>(() => lines.map(() => ''))
 
   useEffect(() => {
-    monaco.editor.setTheme(isDark ? 'vs-dark' : 'vs')
-  }, [isDark])
+    monaco.editor.setTheme(monacoThemeId)
+  }, [monacoThemeId])
 
   useEffect(() => {
     if (lines.length === 0) {

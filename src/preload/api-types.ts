@@ -45,6 +45,8 @@ import type {
 } from './api/os-permission-api'
 import type { PetApi } from './api/pet-api'
 import type { PluginsApi } from './api/plugin-host-api'
+import type { LanguageServersApi } from './api/language-server-api'
+import type { VscodeExtensionsApi } from './api/vscode-extensions-bridge'
 import type { PreflightApi } from './api/preflight-api'
 import type { PtyApi } from './api/pty-api'
 import type { ProjectGroupsApi, ProjectsApi, RepositoryApi } from './api/repository-api'
@@ -146,6 +148,8 @@ export type PreloadApi = {
   pwsh: RuntimeApi['pwsh']
   gitBash: RuntimeApi['gitBash']
   plugins: PluginsApi
+  languageServers: LanguageServersApi
+  vscodeExtensions: VscodeExtensionsApi
   agentStatus: AgentStatusApi
   mobile: MobileApi
   speech: SpeechApi

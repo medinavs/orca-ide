@@ -4,7 +4,7 @@ import Editor from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 import type { MarkdownDocument } from '../../../../shared/filesystem-entry-types'
 import { useAppStore } from '@/store'
-import '@/lib/monaco-setup'
+import { monaco } from '@/lib/monaco-setup'
 import { computeEditorFontSize, resolveEditorFontFamily } from '@/lib/editor-font-zoom'
 
 import { useContextualCopySetup } from './useContextualCopySetup'
@@ -22,6 +22,9 @@ import { useMonacoEditorDecorations } from './use-monaco-editor-decorations'
 import { useMonacoEditorMount } from './use-monaco-editor-mount'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
+import { notifyLspDocumentSaved, useLspDocument } from '@/lib/monaco-lsp/use-lsp-document'
+import type { LanguageDocumentRef } from '../../../../preload/api/language-server-api'
+import { useMonacoThemeId } from '@/lib/vscode-extensions/use-monaco-theme-id'
 
 type MonacoEditorProps = {
   fileId: string
@@ -44,6 +47,16 @@ type MonacoEditorProps = {
   readOnly?: boolean
   liveTail?: boolean
   autoHeight?: boolean
+  /**
+   * Opt-in language-server binding: diagnostics, and the document sync they
+   * need. Absent on every surface whose buffer is not a single coherent file
+   * — diff sub-editors, code excerpts and notebook cells — which keeps the
+   * deliberate silence described in `monaco-setup.ts`.
+   *
+   * Resolved by the caller (see `useLspDocumentRef`) so this component needs
+   * no workspace state of its own.
+   */
+  languageServerDocument?: LanguageDocumentRef | null
 }
 
 export default function MonacoEditor({
@@ -65,7 +78,8 @@ export default function MonacoEditor({
   conflictDecorationsEnabled = false,
   readOnly = false,
   liveTail = false,
-  autoHeight = false
+  autoHeight = false,
+  languageServerDocument = null
 }: MonacoEditorProps): React.JSX.Element {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const editorContainerRef = useRef<HTMLDivElement | null>(null)
@@ -77,9 +91,18 @@ export default function MonacoEditor({
   const { setupCopy, toastNode } = useContextualCopySetup()
   // Why: hold the throttle timer in a ref so unmount cleanup can cancel a pending write before snapshotting the final scroll position.
   const scrollThrottleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const propsRef = useRef({ relativePath, language, onSave, onContentChange })
+  // Why a ref: the mount handler installs the save action once, so it cannot
+  // close over a document identity that is resolved later in this render.
+  const languageServerRefRef = useRef<LanguageDocumentRef | null>(null)
+  const handleSave = (content: string): void => {
+    onSave(content)
+    // `didSave` after the write, not before: a server that re-reads from disk
+    // on save must not read the pre-save bytes.
+    notifyLspDocumentSaved(languageServerRefRef.current)
+  }
+  const propsRef = useRef({ relativePath, language, onSave: handleSave, onContentChange })
   // Why: assign during render so the ref is current before any handler reads it (a useEffect would leave a one-render stale window).
-  propsRef.current = { relativePath, language, onSave, onContentChange }
+  propsRef.current = { relativePath, language, onSave: handleSave, onContentChange }
   const readOnlyRef = useRef(readOnly)
   readOnlyRef.current = readOnly
   const contentSyncModeRef = useRef<MonacoContentSyncMode>('undoable')
@@ -118,6 +141,7 @@ export default function MonacoEditor({
   const isDark =
     settings?.theme === 'dark' ||
     (settings?.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const monacoThemeId = useMonacoThemeId(isDark)
 
   const { queueReveal, cancelScheduledReveal, clearTransientRevealHighlight } =
     useMonacoRevealScheduler()
@@ -166,6 +190,12 @@ export default function MonacoEditor({
       ...buildFileEditorWordWrapOptions(editorWordWrap)
     })
   }, [editorFontFamily, editorFontSize, editorWordWrap])
+
+  languageServerRefRef.current = useLspDocument({
+    editorInstance: mountedEditor,
+    markerWriter: monaco.editor,
+    ref: languageServerDocument
+  })
 
   const decorations = useMonacoEditorDecorations({
     editorRef,
@@ -232,7 +262,7 @@ export default function MonacoEditor({
         language={language}
         // Why: defaultValue, not controlled value — Orca owns post-mount content sync; a controlled path would double setValue.
         defaultValue={content}
-        theme={isDark ? 'vs-dark' : 'vs'}
+        theme={monacoThemeId}
         onChange={contentSync.handleChange}
         onMount={handleMount}
         options={{

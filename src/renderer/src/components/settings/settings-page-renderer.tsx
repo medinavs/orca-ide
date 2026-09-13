@@ -49,7 +49,8 @@ import {
   renderAdvancedSettingsSection,
   renderDevSettingsSection,
   renderExperimentalSettingsSection,
-  renderPluginsSettingsSection
+  renderPluginsSettingsSection,
+  renderVscodeExtensionsSettingsSection
 } from './settings-advanced-section-renderers'
 import { renderProjectSettingsSections } from './settings-project-section-renderer'
 
@@ -147,6 +148,7 @@ export function renderSettingsPage(context: SettingsRenderContext): React.JSX.El
                 {renderDevSettingsSection(context)}
                 {renderExperimentalSettingsSection(context)}
                 {renderPluginsSettingsSection(context)}
+                {renderVscodeExtensionsSettingsSection(context)}
                 {renderProjectSettingsSections(context)}
               </ActiveSettingsSectionProvider>
             )}

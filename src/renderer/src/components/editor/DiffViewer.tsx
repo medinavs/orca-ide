@@ -28,6 +28,7 @@ import { buildDiffEditorWordWrapOptions } from './diff-editor-word-wrap-options'
 import { useDiffEditorRegistration } from './diff-navigation-context'
 import { preserveDiffViewStateAcrossModelSwaps } from './diff-model-swap-view-state'
 import { monacoFindOptions } from './monaco-find-options'
+import { useMonacoThemeId } from '@/lib/vscode-extensions/use-monaco-theme-id'
 
 export default function DiffViewer({
   modelKey,
@@ -70,6 +71,7 @@ export default function DiffViewer({
   const isDark =
     settings?.theme === 'dark' ||
     (settings?.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const monacoThemeId = useMonacoThemeId(isDark)
 
   const diffEditorRef = useRef<editor.IStandaloneDiffEditor | null>(null)
   const { registerDiffEditor, unregisterDiffEditor } = useDiffEditorRegistration()
@@ -409,7 +411,7 @@ export default function DiffViewer({
             language={language}
             original={originalContent}
             modified={modifiedContent}
-            theme={isDark ? 'vs-dark' : 'vs'}
+            theme={monacoThemeId}
             onMount={handleMount}
             // Why: a file can have multiple live diff tabs, so key models off tab identity (not file path) to avoid cross-tab reuse.
             // Why: Changes mode rotates only the original-side model after HEAD moves, preserving the modified side's undo stack.
