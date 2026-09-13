@@ -39,6 +39,10 @@ import { registerSessionHandlers } from '../session'
 import { registerSettingsHandlers } from '../settings'
 import { registerDiagnosticsHandlers } from '../diagnostics'
 import { registerSkillsHandlers } from '../skills'
+import { registerLanguageServerHandlers } from '../language-servers'
+import { initLanguageServerService } from '../../lsp/language-server-service-instance'
+import { registerVscodeExtensionHandlers } from '../vscode-extensions'
+import { createVscodeExtensionService } from '../../vscode-compat/vscode-extension-service'
 import { registerSkillDeleteIpcHandlers } from '../skill-delete/handlers'
 import { registerWorkspaceSpaceHandlers } from '../workspace-space'
 import { registerWorkspacePortHandlers } from '../workspace-ports'
@@ -177,6 +181,18 @@ export function registerCoreHandlers(
   registerComputerUsePermissionHandlers()
   registerSettingsHandlers(store, agentAwakeService)
   registerSkillsHandlers(store, runtime)
+  // Null when settings disable LSP: no handlers, and the editor behaves
+  // exactly as it did before language support existed.
+  const languageServers = initLanguageServerService(store)
+  if (languageServers) {
+    registerLanguageServerHandlers(languageServers)
+  }
+  registerVscodeExtensionHandlers(
+    createVscodeExtensionService({
+      userDataPath: app.getPath('userData'),
+      disabledExtensionIds: () => store.getSettings().disabledVscodeExtensionIds ?? []
+    })
+  )
   registerSkillDeleteIpcHandlers(store, runtime)
   if (automations) {
     registerAutomationHandlers(store, automations)

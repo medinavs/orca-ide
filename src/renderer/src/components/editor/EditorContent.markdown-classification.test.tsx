@@ -63,7 +63,10 @@ vi.mock('@/store', () => {
   const state = {
     markdownRichModeSizeOverridden: false,
     setMarkdownRichModeSizeOverride: () => {},
-    reloadOpenCheckRunDetailsTab: () => {}
+    reloadOpenCheckRunDetailsTab: () => {},
+    // EditorContent resolves the LSP document ref, which needs the workspace
+    // list to decide whether a tab is a real file inside a known worktree.
+    worktreesByRepo: {}
   }
   return {
     useAppStore: Object.assign(

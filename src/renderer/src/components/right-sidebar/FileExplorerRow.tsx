@@ -18,6 +18,7 @@ import { CLOSE_ALL_CONTEXT_MENUS_EVENT } from '@/components/tab-bar/SortableTab'
 import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client'
 import { createMultiSelectDragGhost } from './file-explorer-multi-drag-image'
 import { FileExplorerRowContextMenu } from './file-explorer-row-context-menu'
+import { FileExplorerDiagnosticBadge } from '../diagnostics/FileExplorerDiagnosticBadge'
 
 // ─── File / Folder Row with Context Menu ─────────────────────────
 
@@ -230,6 +231,10 @@ export function FileExplorerRow({
           >
             {node.name}
           </span>
+          <FileExplorerDiagnosticBadge
+            relativePath={node.relativePath}
+            isDirectory={node.isDirectory}
+          />
           {nodeStatus ? (
             <span
               className="ml-auto shrink-0 text-[10px] font-semibold tracking-wide mr-2"

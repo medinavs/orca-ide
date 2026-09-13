@@ -108,6 +108,10 @@
   --color-workspace-status-progress: var(--workspace-status-progress);
   --color-tab-group-split-divider: var(--tab-group-split-divider);
   --color-tab-group-split-divider-strong: var(--tab-group-split-divider-strong);
+  --color-diagnostic-error: var(--diagnostic-error);
+  --color-diagnostic-warning: var(--diagnostic-warning);
+  --color-diagnostic-info: var(--diagnostic-info);
+  --color-diagnostic-hint: var(--diagnostic-hint);
   --color-git-graph-ref: var(--git-graph-ref);
   --color-git-graph-remote-ref: var(--git-graph-remote-ref);
   --color-git-graph-base-ref: var(--git-graph-base-ref);
@@ -222,6 +226,13 @@
   --terminal-pane-title-on-light-button-hover-fg: rgb(24 24 27);
   --terminal-pane-title-on-light-input-bg: rgb(24 24 27 / 0.05);
   --terminal-pane-title-on-light-separator: rgb(24 24 27 / 0.1);
+  /* LSP diagnostic severities, mirroring VS Code's editorError/Warning/Info/Hint
+     for the same reason the git decorations do: users arriving from VS Code
+     should not have to relearn what a color means. */
+  --diagnostic-error: #e51400;
+  --diagnostic-warning: #bf8803;
+  --diagnostic-info: #1a85ff;
+  --diagnostic-hint: #6c6c6c;
   --git-decoration-added: #587c0c;
   --git-decoration-modified: #895503;
   --git-decoration-deleted: #ad0707;
@@ -338,6 +349,11 @@
   --terminal-pane-title-on-light-button-hover-fg: rgb(24 24 27);
   --terminal-pane-title-on-light-input-bg: rgb(24 24 27 / 0.05);
   --terminal-pane-title-on-light-separator: rgb(24 24 27 / 0.1);
+  /* Dark-mode diagnostic severities, from VS Code's dark theme. */
+  --diagnostic-error: #f14c4c;
+  --diagnostic-warning: #cca700;
+  --diagnostic-info: #3794ff;
+  --diagnostic-hint: #b7b7b7;
   --git-decoration-added: #81b88b;
   --git-decoration-modified: #e2c08d;
   --git-decoration-deleted: #c74e39;

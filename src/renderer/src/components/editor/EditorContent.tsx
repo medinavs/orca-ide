@@ -13,6 +13,8 @@ import { translate } from '@/i18n/i18n'
 import { useEditorConflictNavigation } from './useEditorConflictNavigation'
 import { useMarkdownDocuments } from './useMarkdownDocuments'
 import type { MarkdownRenderState } from './markdown-render-mode'
+import { useAllWorktrees } from '@/store/selectors'
+import { useLspDocumentRef } from '@/lib/monaco-lsp/lsp-document-ref-hook'
 
 const noopCloseMarkdownTableOfContents = (): void => {}
 
@@ -109,6 +111,25 @@ export function EditorContent({
   const monacoLanguage = resolvedLanguage === 'notebook' ? 'json' : resolvedLanguage
   const reloadOpenCheckRunDetailsTab = useAppStore((state) => state.reloadOpenCheckRunDetailsTab)
   const markdownDocuments = useMarkdownDocuments(activeFile, isMarkdown, mdViewMode, handleSave)
+  const allWorktrees = useAllWorktrees()
+  // Resolved here, above the mode branches, because hooks cannot run after the
+  // early returns below. Null for every tab that is not a real file on disk.
+  const languageServerDocument = useLspDocumentRef(
+    activeFile.mode === 'edit'
+      ? {
+          filePath: activeFile.filePath,
+          worktreeId: activeFile.worktreeId,
+          language: monacoLanguage,
+          isUntitled: activeFile.isUntitled,
+          diffSource: activeFile.diffSource,
+          combinedAlternate: activeFile.combinedAlternate,
+          checkRunDetails: activeFile.checkRunDetails,
+          externalSshTargetId: activeFile.externalSshTargetId,
+          markdownPreviewSourceFileId: activeFile.markdownPreviewSourceFileId
+        }
+      : null,
+    allWorktrees
+  )
   const getConflictNavigation = useEditorConflictNavigation()
   const activeConflictEntry =
     worktreeEntries.find((entry) => entry.path === activeFile.relativePath) ?? null
@@ -256,6 +277,7 @@ export function EditorContent({
         handleDirtyStateHint={handleDirtyStateHint}
         handleSave={handleSave}
         reloadContent={reloadContent}
+        languageServerDocument={languageServerDocument}
       />
     )
   }

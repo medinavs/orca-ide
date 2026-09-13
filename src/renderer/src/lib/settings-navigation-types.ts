@@ -36,6 +36,7 @@ const SETTINGS_NAV_TARGETS = [
   'ssh',
   'experimental',
   'plugins',
+  'vscode-extensions',
   'agents',
   'orchestration',
   'artifacts',

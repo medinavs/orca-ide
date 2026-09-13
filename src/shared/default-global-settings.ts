@@ -53,6 +53,12 @@ export function buildDefaultSettings(args: {
     // Why empty: the editor keeps following the terminal font unless the user opts in.
     editorFontFamily: '',
     editorWordWrap: true,
+    // Why on by default: a language server only starts when a file whose
+    // language has one is opened, and a missing binary is reported as a
+    // dismissible status rather than an error — so the cost of it being on for
+    // a user with no toolchain installed is zero.
+    languageServersEnabled: true,
+    languageServers: {},
     richMarkdownSpellcheckEnabled: true,
     markdownReviewToolsEnabled: true,
     primarySelectionMiddleClickPaste: args.primarySelectionMiddleClickPaste,

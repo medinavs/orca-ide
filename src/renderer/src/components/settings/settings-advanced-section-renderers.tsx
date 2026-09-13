@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { AdvancedPane } from './AdvancedPane'
 import { ExperimentalPane } from './ExperimentalPane'
 import { PluginsSettingsSection } from './PluginsSettingsSection'
+import { VscodeExtensionsSettingsSection } from './VscodeExtensionsSettingsSection'
 import { SettingsSection } from './SettingsSection'
 import { translate } from '@/i18n/i18n'
 import type { SettingsRenderContext } from './settings-render-context'
@@ -91,6 +92,21 @@ export function renderPluginsSettingsSection(
   return model.showDesktopOnlySettings ? (
     <PluginsSettingsSection
       mounted={view.isSectionMounted('plugins')}
+      settings={model.settings}
+      updateSettings={model.updateSettingsOrThrow}
+    />
+  ) : null
+}
+
+export function renderVscodeExtensionsSettingsSection(
+  context: SettingsRenderContext
+): React.JSX.Element | null {
+  const { model, view } = context
+  // Desktop-only for the same reason plugins are: installing reads a file
+  // from this machine's disk through a native picker in main.
+  return model.showDesktopOnlySettings ? (
+    <VscodeExtensionsSettingsSection
+      isActive={view.isSectionMounted('vscode-extensions')}
       settings={model.settings}
       updateSettings={model.updateSettingsOrThrow}
     />
